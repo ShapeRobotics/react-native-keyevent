@@ -154,11 +154,12 @@ Implement onConfigurationChanged method in MainActivity.java
 
 #### iOS
 
-This will need to be added in your `AppDelegate.m` file:
+This will need to be added in your `AppDelegate.mm` file:
 
 ```objc
 // react-native-keyevent
-#import <RNKeyEvent.h>  // import our package after linking
+#import <React/RCTRootView.h>
+#import <RNKeyListener.h> // import these two files at the top after linking
 
 @implementation AppDelegate
 
@@ -167,38 +168,26 @@ This will need to be added in your `AppDelegate.m` file:
 /*!
  * react-native-keyevent support
  */
-RNKeyEvent *keyEvent = nil;
 
-- (NSMutableArray<UIKeyCommand *> *)keyCommands {
-  NSMutableArray *keys = [NSMutableArray new];
-
-  if (keyEvent == nil) {
-    keyEvent = [[RNKeyEvent alloc] init];
-  }
-
-  if ([keyEvent isListening]) {
-    NSArray *namesArray = [[keyEvent getKeys] componentsSeparatedByString:@","];
-
-    NSCharacterSet *validChars = [NSCharacterSet characterSetWithCharactersInString:@"ABCDEFGHIJKLMNOPQRSTUVWXYZ"];
-
-    for (NSString* names in namesArray) {
-      NSRange  range = [names rangeOfCharacterFromSet:validChars];
-
-      if (NSNotFound != range.location) {
-        [keys addObject: [UIKeyCommand keyCommandWithInput:names modifierFlags:UIKeyModifierShift action:@selector(keyInput:)]];
-      } else {
-        [keys addObject: [UIKeyCommand keyCommandWithInput:names modifierFlags:0 action:@selector(keyInput:)]];
-      }
-    }
-  }
-
-  return keys;
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+{
+  self.moduleName = @"YOUR_PROJECT_NAME";
+  // You can add your custom initial props in the dictionary below.
+  // They will be passed down to the ViewController used by React Native.
+  self.initialProps = @{};
+  BOOL init = [super application:application didFinishLaunchingWithOptions:launchOptions];   <-----|
+  NSURL *jsCodeLocation = [self sourceURLForBridge:nil];                                           |
+  RCTRootView *rootView = [[RCTRootView alloc] initWithBundleURL:jsCodeLocation                    |
+    moduleName:self.moduleName                                                                     | 
+    initialProperties:self.initialProps                                                            |
+    launchOptions:launchOptions];                                                                  |   Add all these lines
+    RNKeyListener *keyListenerViewController = [RNKeyListener new];                                |
+  self.window.rootViewController = keyListenerViewController;                                      |
+  self.window.rootViewController.view = rootView;                                                  |
+  [self.window makeKeyAndVisible];                                                                 |
+  return init;                                                                               <-----|
 }
 
-- (void)keyInput:(UIKeyCommand *)sender {
-  NSString *selected = sender.input;
-  [keyEvent sendKeyEvent:selected];
-}
 
 @end
 ```
